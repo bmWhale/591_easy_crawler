@@ -28,9 +28,9 @@ def gather_info(url):
 
 
 if __name__ == '__main__':
-    init_url = 'https://sale.591.com.tw/?shType=list&regionid=3&section=44&kind=9&price=0_1000&shape=1&pattern=4'
-    total_num = '45'
-    pages = 2
+    init_url = 'https://sale.591.com.tw/?shType=list&kind=9&pattern=3&regionid=5&section=54'
+    total_num = '1413'
+    pages = 48
 
     excelfile = "591.xlsx"
     wb = Workbook()
@@ -42,9 +42,12 @@ if __name__ == '__main__':
         print("target URL:", url)
         s = HTMLSession()
         r = s.get(url)
-        r.html.render(sleep = 2)
-        products = r.html.xpath('//*[@id="app"]/div[4]/div[2]/section/div[4]', first=True)
+        r.html.render(sleep = 1, timeout = 20)
+        products = r.html.xpath('//*[@id="app"]/div[4]/div[2]/section/div[3]', first=True)
         print('Page: ',i+1,'+++++++++++++++++++++++++++++++')
+        if not products:
+            print("No jobs")
+            continue
         print("links:",products.absolute_links)
         for item in products.absolute_links:
             print("item:", item)
