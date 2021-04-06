@@ -5,12 +5,12 @@ import time
 import csv
 import requests
 
-# input 物件網址 撈取網頁資料 return 欄位 
+# input 物件網址 撈取網頁資料 return 欄位
 def getData(url):
-    
+
     request_url='https:'+str(url).strip()
     res=requests.get(request_url)
-    
+
     if res.status_code == 200:
         bs=BeautifulSoup(res.text,'html.parser')
         #先宣告變數為NULL 若無撈到資料則寫入NULL
@@ -39,15 +39,17 @@ def getData(url):
                 form=description.text.split('：')[1]
             if description.text.split('：')[0]=='車 位':
                 car=description.text.split('：')[1]
-                
+
         return addr,price,size,floor,room_type,form,car
     else:
         print('link expired:', url)
         return 404, 404, 404, 404, 404, 404, 404
-    
+
 def main(outputfile):
+    #輸入chrome driver 路徑
+    chromedriver = './third_party/chromedriver'
     #利用chrome模擬器開啟
-    browser = webdriver.Chrome()
+    browser = webdriver.Chrome(chromedriver)
     browser.get("https://rent.591.com.tw/?kind=0&region=1")
     #關閉選取地區pop-up 否則無法點選下一頁
     browser.find_element_by_id('area-box-close').click()
@@ -57,7 +59,7 @@ def main(outputfile):
 
     with open(outputfile, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        
+
         bs = BeautifulSoup(browser.page_source, 'html.parser')
         totalpages = int(bs.find('span', {'class':'TotalRecord'}).text.split(' ')[-2])/30 + 1
         print('Total pages: ', totalpages)
@@ -73,6 +75,7 @@ def main(outputfile):
 
             # ------------- write into csv ------------- #
             for url in room_url_list:
+                print('url:', url)
                 addr,price,size,floor,room_type,form,car = getData(url)
                 writer.writerow([addr,price,size,floor,room_type,form,car])
             # ------------------------------------------ #
@@ -86,7 +89,7 @@ def main(outputfile):
                 browser.find_element_by_class_name('pageNext').send_keys(Keys.ESCAPE)
                 browser.find_element_by_class_name('pageNext').click()
                 time.sleep(3)
-                
+
 if __name__ == '__main__':
     # -------- configurable parameter -------- #
     output_file_name = 'tpe_rent_output.csv'
