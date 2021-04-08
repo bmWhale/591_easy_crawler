@@ -16,8 +16,9 @@ def get_total_items(url):
     s = HTMLSession()
     r = s.get(url)
     r.html.render(sleep = 1, timeout = 100)
-    p = r.html.xpath('/html/body/div[2]/div[2]/div[4]/div[2]/section/div[1]/div[1]', first=True)
-    total_items = 788;
+    soup1 = BeautifulSoup(r.html.html, 'html.parser')
+    houseList_head_title = soup1.find('div', class_='houseList-head-title').text
+    total_items = int(''.join(filter(str.isdigit, houseList_head_title)))
     total_pages = int(total_items/30 + 1)
     return total_items, total_pages
 
@@ -27,7 +28,7 @@ def gather_info(ws, url):
         return None, None
     soup1 = BeautifulSoup(result.content, 'html.parser')
     price = soup1.find('span', class_='info-price-num').text
-    print("總價："+ re.sub(r"\s+", "", price));
+    print("總價："+ re.sub(r"\s+", "", price))
     addrs = soup1.find_all('span', class_='info-addr-value')
     for s in addrs:
         print("地址：" + s.text)
@@ -35,15 +36,31 @@ def gather_info(ws, url):
     floors_key = soup1.find_all('div', class_='info-floor-key')
     #floors_value = soup1.find_all('div', class_='info-floor-value')
     for s in floors_key:
-        print("格局：" + s.text);
+        print("格局：" + s.text)
 
-    name = soup1.find("span", class_="info-span-name").text
-    print("姓名：" + soup1.find("span", class_="info-span-name").text)
-    phone = soup1.find("span", class_="info-host-word").text
+    try:
+      name = soup1.find("span", class_="info-span-name").text
+    except:
+      name = ""
+
+    try:
+      phone = soup1.find("span", class_="info-host-word").text
+    except:
+      phone = ""
+
+    try:
+      remark = soup1.find("span", class_="info-span-msg").text
+    except:
+      remark = ""
+
+    try:
+      detail = soup1.find("div", class_="info-detail-show").text
+    except:
+      detail = ""
+
+    print("姓名：" + name)
     print("電話：" + re.sub(r"\s+", "", phone))
-    remark = soup1.find("span", class_="info-span-msg").text
-    print("訊息：" + soup1.find("span", class_="info-span-msg").text)
-    detail = soup1.find("div", class_="info-detail-show").text
+    print("訊息：" + remark)
     print("詳情：" + re.sub(r"\s+", "", detail))
     #ws.append([name, re.sub(r"\s+", "", phone), remark])
 
@@ -55,7 +72,7 @@ def main(outputfile, init_url):
     signal.signal(signal.SIGINT, exit)
     signal.signal(signal.SIGTERM, exit)
     if not init_url or not outputfile:
-        print('parameters error');
+        print('parameters error')
         return
 
     print("Set URL:", init_url)
@@ -65,7 +82,7 @@ def main(outputfile, init_url):
     wb = Workbook()
     ws = wb.active
     ws.append(['姓名', '電話', '訊息'])
-    count = 0;
+    count = 0
     for i in range(pages):
         url = init_url +'&firstRow='+ str(i*30) + '&totalRows='+str(items)
         print('Page: ',i+1,'+++++++++++++++++++++++++++++++')
@@ -83,11 +100,11 @@ def main(outputfile, init_url):
                 for item in products.absolute_links:
                     print("item:", item)
                     if 'sale.591.com.tw' in item:
-                        count = count + 1;
+                        count = count + 1
                         print('===============================')
                         print("count:",count,item)
                         gather_info(ws, item)
-                break;
+                break
             else:
                 print('Retry url: ', url, 'again')
     wb.save(output_file_name)
