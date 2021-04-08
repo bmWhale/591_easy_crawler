@@ -8,16 +8,15 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 def get_total_items(url):
-    result = requests.get(url,headers={'User-Agent': 'Chrome/35.0.1916.47'})
-    if result.status_code != 200:
-        return None, None
-    soup1 = BeautifulSoup(result.content, 'html.parser')
-    print('區域：', soup1.find('span', {'class':'areaTxt'}).text)
     s = HTMLSession()
     r = s.get(url)
-    r.html.render(sleep = 1, timeout = 100)
+    r.html.render(sleep = 3, timeout = 100)
+    if r.status_code != 200:
+        return None, None
     soup1 = BeautifulSoup(r.html.html, 'html.parser')
+    print('區域：', soup1.find('span', {'class':'areaTxt'}).text)
     houseList_head_title = soup1.find('div', class_='houseList-head-title').text
+    print(houseList_head_title);
     total_items = int(''.join(filter(str.isdigit, houseList_head_title)))
     total_pages = int(total_items/30 + 1)
     return total_items, total_pages
@@ -72,11 +71,18 @@ def main(outputfile, init_url):
     signal.signal(signal.SIGINT, exit)
     signal.signal(signal.SIGTERM, exit)
     if not init_url or not outputfile:
-        print('parameters error')
+        print('參數錯誤：設定網址為空 或 輸出檔名為空')
         return
 
-    print("Set URL:", init_url)
-    items, pages = get_total_items(init_url)
+    print("設定網址:", init_url)
+    for i in range(1,3):
+        try:
+            items, pages = get_total_items(init_url)
+            break;
+        except:
+            print("錯誤：無法獲取總共的房子數");
+            items, pages = 0, 0
+
     if items == 0:
         return
     wb = Workbook()
@@ -85,28 +91,31 @@ def main(outputfile, init_url):
     count = 0
     for i in range(pages):
         url = init_url +'&firstRow='+ str(i*30) + '&totalRows='+str(items)
-        print('Page: ',i+1,'+++++++++++++++++++++++++++++++')
-        print("Select URL:", url)
+        print('----第',i+1,'頁----------')
+        print("目標網址:", url)
         for j in range(1,10):
             s = HTMLSession()
             r = s.get(url)
             r.html.render(sleep = 1, timeout = 100)
             products = r.html.xpath('//*[@id="app"]/div[4]/div[2]/section/div[3]', first=True)
             if not products:
-                print("No jobs...FIXME!")
+                print("錯誤：找不到任何網址!")
                 continue
-            print("Number of links:",len(products.absolute_links))
+            print("共找到",len(products.absolute_links),"間房子")
             if len(products.absolute_links) > 0:
                 for item in products.absolute_links:
-                    print("item:", item)
                     if 'sale.591.com.tw' in item:
                         count = count + 1
                         print('===============================')
-                        print("count:",count,item)
+                        print("第",count,"間")
                         gather_info(ws, item)
+                        print("房子的網址:", item)
+                    else:
+                        print('===============================')
+                        print("其他的網址:", item)
                 break
             else:
-                print('Retry url: ', url, 'again')
+                print('錯誤網址: ', url, '重試')
     wb.save(output_file_name)
 
 if __name__ == '__main__':
@@ -115,4 +124,4 @@ if __name__ == '__main__':
     output_file_name = '591_output.csv'
     # ---------------------------------------- #
     main(output_file_name, url)
-    print('finish!')
+    print('完成!')
