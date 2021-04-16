@@ -61,7 +61,7 @@ def gather_info(ws, url):
     print("電話：" + re.sub(r"\s+", "", phone))
     print("訊息：" + remark)
     print("詳情：" + re.sub(r"\s+", "", detail))
-    #ws.append([name, re.sub(r"\s+", "", phone), remark])
+    ws.append([name, re.sub(r"\s+", "", phone), re.sub(r"\s+", "", detail)])
 
 def exit(signum, frame):
         print('You choose to stop me.')
@@ -121,7 +121,7 @@ def main(outputfile, init_url):
 if __name__ == '__main__':
     # -------- configurable parameter -------- #
     url = "https://sale.591.com.tw/?shType=list&regionid=5&section=54&kind=9&pattern=3&shape=2&price=500$_1500$"
-    output_file_name = '591_output.csv'
+    output_file_name = '591_output.xlsx'
     # ---------------------------------------- #
     main(output_file_name, url)
     print('完成!')
