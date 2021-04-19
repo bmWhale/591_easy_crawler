@@ -2,6 +2,6 @@
 
 ## How to Install & Run
 ```
-pip install pipenv
-pipenv run python 591xls.py
+sh install.sh
+python3 591xls.py
 ```
